@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Show SDK info
+        run: dotnet --info
+
+      - name: Restore
+        run: dotnet restore FlagDeck.sln
+
+      - name: Build
+        run: dotnet build FlagDeck.sln --configuration Release --no-restore /warnaserror
+
+      - name: Test
+        run: |
+          dotnet test FlagDeck.sln \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=test-results.trx" \
+            --logger "GitHubActions;summary.includePassedTests=true" \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-results
+          path: TestResults/**/*
+
+      - name: Pack (verify packaging works)
+        run: dotnet pack src/FlagDeck/FlagDeck.csproj --configuration Release --no-build --output ./nupkgs
+
+      - name: Upload nupkg artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: nupkgs
+          path: ./nupkgs/*.nupkg
