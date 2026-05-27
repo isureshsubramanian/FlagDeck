@@ -1,0 +1,79 @@
+name: Publish — GitHub Packages
+
+# Every push to main produces a CI prerelease build at <base>-ci.<run-number> and pushes
+# it to the repo's GitHub Packages NuGet feed. Tag pushes are handled by publish-nuget.yml.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  publish:
+    name: Pack & push to GitHub Packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Compute prerelease version
+        id: ver
+        run: |
+          # Base version pulled from src/FlagDeck/FlagDeck.csproj <Version> if present,
+          # otherwise from the most recent v* git tag, otherwise 0.1.0.
+          BASE=$(grep -oPm1 "(?<=<Version>)[^<]+" src/FlagDeck/FlagDeck.csproj || true)
+          if [ -z "$BASE" ]; then
+            TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "v0.1.0")
+            BASE="${TAG#v}"
+          fi
+          # Strip any existing prerelease suffix on the base.
+          BASE="${BASE%%-*}"
+          VERSION="${BASE}-ci.${GITHUB_RUN_NUMBER}"
+          echo "Version: $VERSION"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Restore
+        run: dotnet restore FlagDeck.sln
+
+      - name: Build
+        run: dotnet build src/FlagDeck/FlagDeck.csproj --configuration Release --no-restore -p:Version=${{ steps.ver.outputs.version }}
+
+      - name: Test
+        run: dotnet test FlagDeck.sln --configuration Release --no-build
+
+      - name: Pack
+        run: |
+          dotnet pack src/FlagDeck/FlagDeck.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            -p:Version=${{ steps.ver.outputs.version }} \
+            -p:PackageVersion=${{ steps.ver.outputs.version }}
+
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget add source \
+            "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+            --name github \
+            --username "${{ github.actor }}" \
+            --password "${{ secrets.GITHUB_TOKEN }}" \
+            --store-password-in-clear-text
+          dotnet nuget push "./nupkgs/*.nupkg" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --source github \
+            --skip-duplicate
