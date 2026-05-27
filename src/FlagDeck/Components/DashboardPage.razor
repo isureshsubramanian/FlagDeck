@@ -1,0 +1,125 @@
+@namespace FlagDeck.Components
+@using System.Linq
+
+<!DOCTYPE html>
+<html lang="en" data-theme="@(Model.Theme == FlagDeckTheme.Dark ? "dark" : "light")">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>@Model.Title — @Model.EnvironmentName</title>
+    <link rel="stylesheet" href="@(Model.PathPrefix)/assets/flagdeck.css" />
+</head>
+<body>
+    <div class="fd-shell">
+        <header class="fd-header">
+            <div class="fd-brand">
+                <svg class="fd-mark" viewBox="0 0 32 32" aria-hidden="true">
+                    <rect x="3" y="6" width="26" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M9 13 h14 M9 19 h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <div class="fd-brand-text">
+                    <h1>@Model.Title</h1>
+                    <p>@Model.Subtitle</p>
+                </div>
+            </div>
+            <div class="fd-header-actions">
+                <span class="fd-badge fd-badge-env" title="Environment">@Model.EnvironmentName</span>
+                @if (Model.OverrideCount > 0)
+                {
+                    <span class="fd-badge fd-badge-overrides" title="Active overrides">@Model.OverrideCount override@(Model.OverrideCount == 1 ? string.Empty : "s")</span>
+                }
+                <form method="post" action="@(Model.PathPrefix)/theme" class="fd-theme-form">
+                    <input type="hidden" name="theme" value="@(Model.Theme == FlagDeckTheme.Dark ? "light" : "dark")" />
+                    <button type="submit" class="fd-icon-btn" title="@(Model.Theme == FlagDeckTheme.Dark ? "Switch to light theme" : "Switch to dark theme")">
+                        @if (Model.Theme == FlagDeckTheme.Dark)
+                        {
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.5" y1="4.5" x2="6.5" y2="6.5"/><line x1="17.5" y1="17.5" x2="19.5" y2="19.5"/><line x1="4.5" y1="19.5" x2="6.5" y2="17.5"/><line x1="17.5" y1="6.5" x2="19.5" y2="4.5"/></g></svg>
+                        }
+                        else
+                        {
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="currentColor"/></svg>
+                        }
+                    </button>
+                </form>
+            </div>
+        </header>
+
+        <section class="fd-toolbar">
+            <form method="get" action="@(Model.PathPrefix)/" class="fd-search">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input type="search" name="q" value="@Model.Search" placeholder="Filter flags" autocomplete="off" />
+            </form>
+            <form method="post" action="@(Model.PathPrefix)/clear" class="fd-clear-form" onsubmit="return confirm('Clear every FlagDeck override?');">
+                <button type="submit" class="fd-btn fd-btn-ghost" @(Model.OverrideCount == 0 ? "disabled" : null)>Clear all overrides</button>
+            </form>
+        </section>
+
+        <main class="fd-card">
+            @if (Visible.Count == 0)
+            {
+                <div class="fd-empty">
+                    @if (Model.Flags.Count == 0)
+                    {
+                        <h2>No feature flags registered</h2>
+                        <p>Add flags under the <code>FeatureManagement</code> section of <code>appsettings.json</code>, then refresh.</p>
+                    }
+                    else
+                    {
+                        <h2>No flags match &ldquo;@Model.Search&rdquo;</h2>
+                        <p><a href="@(Model.PathPrefix)/">Clear filter</a></p>
+                    }
+                </div>
+            }
+            else
+            {
+                <table class="fd-table" aria-label="Feature flags">
+                    <thead>
+                        <tr>
+                            <th scope="col">Flag</th>
+                            <th scope="col" title="Value from appsettings.json / filters">Configured</th>
+                            <th scope="col" title="What your browser actually sees">Effective</th>
+                            <th scope="col" class="fd-col-actions">Override</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var flag in Visible)
+                        {
+                            <FlagRow Flag="flag" PathPrefix="@Model.PathPrefix" />
+                        }
+                    </tbody>
+                </table>
+            }
+        </main>
+
+        <footer class="fd-footer">
+            <span>FlagDeck v@(Model.Version)</span>
+            <span class="fd-sep">·</span>
+            <span>Overrides scoped to your browser via cookie <code>flagdeck.overrides</code></span>
+            <span class="fd-sep">·</span>
+            <a href="https://github.com/sureshsubramanian/FlagDeck" target="_blank" rel="noopener">Docs</a>
+        </footer>
+    </div>
+
+    <script src="@(Model.PathPrefix)/assets/flagdeck.js" defer></script>
+</body>
+</html>
+
+@code {
+    [Parameter, EditorRequired] public DashboardModel Model { get; set; } = default!;
+
+    private IReadOnlyList<FlagRowModel> Visible
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(Model.Search))
+            {
+                return Model.Flags;
+            }
+            var needle = Model.Search.Trim();
+            return Model.Flags
+                .Where(f => f.Name.Contains(needle, System.StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+}

@@ -1,0 +1,14 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <!--
+      The sample is intentionally inline / demonstrative — small allocations and minor style
+      suggestions don't justify hard-stopping the build. The library itself stays strict.
+    -->
+    <NoWarn>$(NoWarn);CA1861;CA1812;CA1822;CA2007;CA1031;CA1515;CA1303;CA1054</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

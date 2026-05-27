@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>FlagDeck</RootNamespace>
+    <AssemblyName>FlagDeck</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <PackageId>FlagDeck</PackageId>
+    <Title>FlagDeck — Developer Dashboard for Microsoft.FeatureManagement</Title>
+    <Description>An embedded Blazor dashboard for ASP.NET Core that lets developers list and toggle Microsoft.FeatureManagement feature flags at runtime via cookies. Safe by design: never maps in Production. Ships with light/dark executive theme.</Description>
+    <PackageTags>aspnetcore;feature-flags;feature-management;blazor;developer-tools;dashboard;dotnet10</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/sureshsubramanian/FlagDeck</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>See https://github.com/sureshsubramanian/FlagDeck/releases</PackageReleaseNotes>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="" />
+    <None Include="icon.png" Pack="true" PackagePath="" Condition="Exists('icon.png')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\flagdeck.css" />
+    <EmbeddedResource Include="Assets\flagdeck.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="FlagDeck.Tests" />
+  </ItemGroup>
+
+</Project>

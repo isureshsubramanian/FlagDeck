@@ -1,0 +1,55 @@
+@namespace FlagDeck.Components
+
+<tr class="fd-row @(Flag.OverrideValue is null ? string.Empty : "fd-row-overridden")">
+    <th scope="row" class="fd-flag-name">
+        <span class="fd-flag-dot" data-state="@(Flag.EffectiveValue ? "on" : "off")" aria-hidden="true"></span>
+        <code>@Flag.Name</code>
+    </th>
+    <td class="fd-cell-state">
+        <span class="fd-pill fd-pill-@(Flag.ConfiguredValue ? "on" : "off")" title="Value from appsettings.json / filters">@(Flag.ConfiguredValue ? "On" : "Off")</span>
+    </td>
+    <td class="fd-cell-state">
+        <span class="fd-pill fd-pill-@(Flag.EffectiveValue ? "on" : "off") fd-pill-effective" title="What the app actually sees for your browser">@(Flag.EffectiveValue ? "Enabled" : "Disabled")</span>
+    </td>
+    <td class="fd-cell-actions">
+        <form method="post" action="@(PathPrefix)/toggle" class="fd-toggle" aria-label="Override @Flag.Name">
+            <input type="hidden" name="name" value="@Flag.Name" />
+
+            <button type="submit" name="state" value="clear"
+                    class="fd-toggle-btn @(Flag.OverrideValue is null ? "fd-toggle-active" : string.Empty)"
+                    title="Use configured value — no override"
+                    aria-label="Use configured value for @Flag.Name"
+                    aria-pressed="@(Flag.OverrideValue is null ? "true" : "false")">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.75"/>
+                    <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                </svg>
+            </button>
+
+            <button type="submit" name="state" value="on"
+                    class="fd-toggle-btn fd-toggle-on @(Flag.OverrideValue == true ? "fd-toggle-active" : string.Empty)"
+                    title="Force ON for your browser"
+                    aria-label="Force @Flag.Name on"
+                    aria-pressed="@(Flag.OverrideValue == true ? "true" : "false")">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                    <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+
+            <button type="submit" name="state" value="off"
+                    class="fd-toggle-btn fd-toggle-off @(Flag.OverrideValue == false ? "fd-toggle-active" : string.Empty)"
+                    title="Force OFF for your browser"
+                    aria-label="Force @Flag.Name off"
+                    aria-pressed="@(Flag.OverrideValue == false ? "true" : "false")">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+                    <path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </form>
+    </td>
+</tr>
+
+@code {
+    [Parameter, EditorRequired] public FlagRowModel Flag { get; set; } = default!;
+    [Parameter, EditorRequired] public string PathPrefix { get; set; } = string.Empty;
+}
