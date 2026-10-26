@@ -41,7 +41,7 @@ If you're a solo dev on localhost and editing JSON doesn't bother you, hot reloa
 - cloud-sourced flag values, or
 - a need to flip flags repeatedly during a manual test session,
 
-…hot reload stops being sufficient, and FlagDeck does what it's actually for. This is the same reason commercial products like LaunchDarkly and ConfigCat exist on top of perfectly capable cloud configuration systems — the question was never "can you change values?", it was "can you change values **for yourself, instantly, without touching the file**?"
+…hot reload stops being sufficient, and FlagDeck does what it's actually for. This is the same reason commercial feature-flag services exist on top of perfectly capable cloud configuration systems — the question was never "can you change values?", it was "can you change values **for yourself, instantly, without touching the file**?"
 
 ## Install
 
